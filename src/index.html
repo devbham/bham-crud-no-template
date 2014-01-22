@@ -1,0 +1,29 @@
+<!doctype html>
+<html ng-app="bham" ng-controller="BhamCtrl">
+<head>
+    <link href="css/bootstrap.min.css" rel="stylesheet" type="text/css">
+</head>
+<body class="container">
+
+    <div class="navbar">
+        <div class="navbar-inner">
+            <a class="brand" href="#/patient">BHAM</a>
+            <ul class="nav">
+                <li><a href="#/patient">Patient</a></li>               
+            </ul>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="span12">
+            <div class="well" ng-view></div>
+        </div>
+    </div>
+
+    <script src="../vendor/angular/angular.min.js"></script>
+	<script src="../vendor/angular-route/angular-route.min.js"></script>    
+	<script src="app/bham.js"></script>
+	<script src="app/patient.js"></script>
+	<script src="common/service/patientService.js"></script>
+</body>
+</html>

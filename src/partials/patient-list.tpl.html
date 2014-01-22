@@ -1,0 +1,26 @@
+
+<h3>List of Patients</h3>
+Search: &nbsp;<input type="text" ng-model="search.$">
+<table class="table table-striped">
+	<thead>
+		 <tr>  
+			<th>First Name</th>  
+			<th>last Name</th>  
+			<th>Age</th>  
+			<th>Sex</th>
+			<th></th> 			
+			<th></th> 
+		  </tr>  
+	</thead>
+	<tbody>
+		<tr ng-repeat="patient in patients | filter:search ">
+			<td> {{ patient.firstName }}</td>
+			<td> {{ patient.lastName }}</td>
+			<td> {{ patient.age }}</td>
+			<td> {{ patient.sex }}</td>
+			<td> <a href="#/patient/edit/{{$index}}" class="btn btn-primary">Edit</a></td>
+			<td> <button ng-click="delete($index)" class="btn btn-primary">Delete</button></td>
+		</tr>
+	</tbody>
+ </table>
+<a href="#/patient/create" class="btn btn-primary">Add patient</a>

@@ -1,0 +1,219 @@
+/*global module:false*/
+'use strict';
+// The "wrapper" function
+module.exports = function (grunt) {
+	
+	var jsFiles = [
+        {
+            expand: true,
+            cwd: 'app/js/',
+            dest: '.tmp/js/',
+            src: '**/*.js',
+            ext: '.min.js'
+        }
+    ];
+
+    // Project and task configuration.
+    grunt.initConfig({
+        // Metadata.
+        pkg: grunt.file.readJSON('package.json'),
+        banner: '/*! <%= pkg.title || pkg.name %> - v<%= pkg.version %> - ' +
+            '<%= grunt.template.today("yyyy-mm-dd") %>\n' +
+            '<%= pkg.homepage ? "* " + pkg.homepage + "\\n" : "" %>' +
+            '* Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' +
+            ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %> */\n',
+        meta: {
+            name: "bla"
+        },
+        // Task configuration.
+        concat: {
+            options: {
+                banner: '<%= banner %>',
+                stripBanners: true
+            },
+            dist: {
+                src: ['lib/<%= pkg.name %>.js'],
+                dest: 'dist/<%= pkg.name %>.js'
+            }
+        },
+        uglify: {
+            options: {
+                banner: '<%= banner %>'
+            },
+            dist: {
+                src: '<%= concat.dist.dest %>',
+                dest: 'dist/<%= pkg.name %>.min.js'
+            },
+            prod: { files: jsFiles }
+        },
+        jshint: {
+            options: {
+                jshintrc: '.jshintrc'
+            },
+            gruntfile: {
+                src: 'Gruntfile.js'
+            },
+            lib_test: {
+                src: ['lib/**/*.js', 'test/**/*.js']
+            },
+            all: {
+                src: ['Gruntfile.js', 'app/js/**/*.js', '!app/js/vendor/**/*.js', 'test/**/*.js']
+            }
+        },
+        watch: {
+            gruntfile: {
+                files: '<%= jshint.gruntfile.src %>',
+                tasks: ['jshint:gruntfile']
+            },
+            lib_test: {
+                files: '<%= jshint.lib_test.src %>',
+                tasks: ['jshint:lib_test']
+            }
+     
+        },                          
+        clean: {
+            all: [
+                '.tmp',
+                '.grunt',
+                'test/index.html',
+                'build',
+                '*.tar.gz'
+            ]
+        },
+        copy: {
+            release: {
+                files: [
+                    {
+                        expand: true,
+                        cwd: 'app',
+                        dest: 'build',
+                        src: ['*.html', 'js/**/*', 'images/**/*']
+                    },
+                    {
+                        expand: true,
+                        cwd: '.tmp',
+                        dest: 'build',
+                        src: ['styles/*']
+                    }
+                ]
+            }
+        },      
+        less: {
+            dev: {
+                options: { paths: ['assets/css'] },
+                files: { '.tmp/styles/result.css': 'app/less/sample.less' }
+            },
+            prod: {
+                options: {
+                    paths: ['assets/css'],
+                    cleancss: true
+                },
+                files: { '.tmp/styles/result.css': 'app/less/sample.less' }
+            }
+        },
+        csslint: {
+            options: { csslintrc: '.csslintrc' },
+            strict: {
+                options: { import: 2 },
+                src: ['.tmp/styles/**/*.css']
+            },
+            lax: {
+                options: { import: false },
+                src: ['.tmp/styles/**/*.css']
+            }
+        },
+        'git-describe': { me: {} },
+        karma: {
+            unit: { configFile: 'test/config/karma.conf.js' },
+            watch: {
+                configFile: 'test/config/karma.conf.js',
+                singleRun: false,
+                autoWatch: true
+            }
+        }
+    });
+
+    grunt.registerTask('test', 'Run tests in real browser', [      
+		'recess',
+		'jshint',
+		'karma:dev',
+        'protractor'		
+    ]);
+	
+	grunt.registerTask('jenkins', 'Run all the tasks for the Jenkins pipeline', [
+        'recess',
+		'jshint',
+		'karma:continuous',
+		'protractor',
+        'concat',
+		'uglify:prod',
+        'save-version',
+		'copy:release'		
+    ]);
+	
+    grunt.registerTask('release', 'Generates a release of the application', [ 		
+        'test',
+        'uglify:prod',        	
+        'save-version',
+        'copy:release'
+    ]);
+	
+    // Default task.
+    grunt.registerTask('default', ['recess', 'jshint', 'concat', 'uglify']);
+	
+    // "Basic" Tasks
+    grunt.registerTask('version', 'Shows version number', function () {
+        var pkg = grunt.file.readJSON('package.json');
+        console.log(pkg.name, pkg.version);
+    });
+	  
+	//CI tasks
+	grunt.registerTask('runRecess', 'Lint and minify css and less files', ['recess']);
+	grunt.registerTask('runJSHint', 'Lint JS files', ['jshint']);
+	grunt.registerTask('runKarma', 'Unit testing in real browser', ['karma:continuous']);
+	grunt.registerTask('runProtractor', 'End to End integration test', ['protractor']);
+	grunt.registerTask('runConcat', 'Concat all JS files', ['concat']);
+	grunt.registerTask('runUglify', 'Minify the concat JS files', ['uglify']);
+	grunt.registerTask('runSaveVersion', 'Save the current version', ['save-version']);
+	grunt.registerTask('runCopyRelease', 'Copy release files in the dist folder', ['copy:Release']);
+   	  
+    // Custom Tasks
+    grunt.registerTask('save-version', function () {
+        grunt.event.once('git-describe', function (rev) {
+            //grunt.log.writeln("Git Revision: " + rev);
+            grunt.file.write('.tmp/version.json', JSON.stringify({
+                version: grunt.config('pkg.version'),
+                revision: rev[3],
+                date: grunt.template.today()
+            }));
+        });
+        grunt.task.run('git-describe');
+    });
+
+    [ // load plugins which provide necessary tasks.        
+		'phantomjs',
+		'karma',
+		'karma-junit-reporter',
+		'karma-jasmine',   
+		'karma-chrome-launcher',
+		'karma-firefox-launcher',
+		'karma-html2js-preprocessor',    
+		'karma-phantomjs-launcher',    
+		'karma-ie-launcher',		
+		'grunt-contrib-jshint',
+		'grunt-contrib-uglify',
+		'grunt-contrib-watch',
+		'grunt-contrib-qunit',
+		'grunt-contrib-concat',
+		'grunt-contrib-less',	
+		'grunt-recess',
+		'grunt-contrib-clean',
+		'grunt-contrib-copy',
+		'grunt-html2js',
+		'grunt-karma', 
+		'grunt-git-describe', 
+		'grunt-contrib-csslint',	
+		'grunt-protractor-runner',
+		'protractor'		
+    ].forEach(grunt.loadNpmTasks);
+};

@@ -1,0 +1,17 @@
+
+<h3>Create patient {{patient.firstName}}</h3>
+
+<form novalidate class="bham-form">
+	<label for="firstname">First Name:</label>
+	<input type="text" name="firstname" ng-model="patient.firstName" required /><br />
+	<label for="lastname" >Last Name: </label>
+	<input type="text" name	="lastname"ng-model="patient.lastName" required /><br />
+	<label for="age">Age:</label>
+	<input type="text" for="age" ng-model="patient.age" required /><br />
+	<input type="radio" ng-model="patient.sex" value="Male"> &nbsp;Male &nbsp;
+	<input type="radio" ng-model="patient.sex" value="Female">&nbsp;Female
+	<br />	<br />	
+	<a href="#/patient" class="btn btn-primary">Back</a>
+	<button ng-click="add(patient)" class="btn btn-primary">Save</button>
+</form>
+

@@ -1,0 +1,8 @@
+
+.bham-form  input.ng-invalid.ng-dirty {
+	background-color: #FA787E;
+}
+
+.bham-form input.ng-valid.ng-dirty {
+	background-color: #78FA89;
+}
